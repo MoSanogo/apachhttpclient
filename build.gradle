@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation group: 'org.apache.httpcomponents.client5', name: 'httpclient5', version: '5.2.1'
+    // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
+    //implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+   // implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '2.0.9', ext: 'pom'
+
+    //  implementation 'org.slf4j:slf4j-nop:2.0.7'
+ //   implementation group: 'org.apache.logging.log4j', name: 'log4j-jcl', version: '2.20.0'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.2'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.9'
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.9'
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
