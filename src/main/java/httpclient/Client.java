@@ -1,11 +1,8 @@
 package httpclient;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import com.google.gson.Gson;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.*;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
@@ -15,9 +12,6 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
 
@@ -57,14 +51,15 @@ public class Client {
     }*/
 
 
-    public <T> CompletableFuture<List<T>> fetch(String url, Class<T> clazz) {
+    public <T> CompletableFuture<List<T>> getAsync(String url, Class<T> clazz) {
         return CompletableFuture.supplyAsync(() -> {
             CollectionType TType=_mapper.getTypeFactory().constructCollectionType(List.class,clazz);
             HttpGet httpGet = new HttpGet(url);
             try {
+                logger.info("Making  %s  Method to the url %s".formatted(httpGet.getClass().getName(),url));
                 return _httpClient.execute(httpGet, (response) -> {
-                    logger.info("Fecthing data from "+ url);
                     var result = EntityUtils.toByteArray(response.getEntity());
+                    logger.info("Successfull Response %s Method to the url %s".formatted(httpGet.getClass().getName(),url));
                     return (List<T>) _mapper.readValue(result, TType);
                 });
 
@@ -77,14 +72,14 @@ public class Client {
 
 
     }
-    public <T> CompletableFuture<T> fetchOne(String url, Class<T> clazz) {
+    public <T> CompletableFuture<T> getOneAsync(String url, Class<T> clazz) {
         return CompletableFuture.supplyAsync(() -> {
-            logger.info("Fecthing data from "+ url);
             HttpGet httpGet = new HttpGet(url);
             try {
+                   logger.info("Making %s Method to the url %s".formatted(httpGet.getClass().getName(),url));
                 return _httpClient.execute(httpGet, (response) -> {
                     var result = EntityUtils.toByteArray(response.getEntity());
-
+                    logger.info("Successfull Response %s Method to the url %s".formatted(httpGet.getClass().getName(),url));
                     return (T) _mapper.readValue(result,clazz);
                 });
 
@@ -98,27 +93,85 @@ public class Client {
 
     }
 
-    public <T> CompletableFuture<T> Post(String url, T data) {
+    public <T> CompletableFuture<T> PostAsync(String url, T data) {
         return CompletableFuture.supplyAsync(()->{
             HttpPost httpPost = new HttpPost(url);
-
             try {
-                var d = _mapper.writeValueAsBytes(data);
-                HttpEntity entity = new ByteArrayEntity(d, ContentType.APPLICATION_JSON);
+                var dataAsByteArray = _mapper.writeValueAsBytes(data);
+                HttpEntity entity = new ByteArrayEntity(dataAsByteArray, ContentType.APPLICATION_JSON);
                 httpPost.setEntity(entity);
+                logger.info("Making %s Method to the url %s".formatted(httpPost.getClass().getName(),url));
               return  _httpClient.execute(httpPost,response -> {
-                    System.out.println(response.getEntity());
+                  logger.info("Successfull Response %s Method to the url %s".formatted(httpPost.getClass().getName(),url));
                    var result=  EntityUtils.toByteArray(response.getEntity());
                     return (T) _mapper.readValue(result,data.getClass());
                 });
 
             } catch (Exception e) {
+                logger.debug(e.getMessage(),e);
                 throw  new RuntimeException(e.getMessage());
             }
 
+        });
+    }
+
+    public CompletableFuture<Boolean> DeleteAsync(String url){
+        HttpDelete httpDelete=new HttpDelete(url);
+       return  CompletableFuture.supplyAsync(()->{
+            try{
+                logger.info("Making %s Method to the url %s".formatted(httpDelete.getClass().getName(),url));
+              return  _httpClient.execute(httpDelete,(response)-> {
+                  logger.info("Successfull Response %s Method to the url %s".formatted(httpDelete.getClass().getName(),url));
+                  return response.getCode()==200? true :false;
+              });
+            }catch(IOException e){
+                logger.debug(e.getMessage(),e);
+                throw  new RuntimeException(e.getMessage());
+            }
+        });
+
+    }
+
+    public <T> CompletableFuture<T> PatchAsync(String url, T data) {
+        return CompletableFuture.supplyAsync(()->{
+            HttpPatch httpPatch = new  HttpPatch(url);
+            try {
+                var dataAsByteArray = _mapper.writeValueAsBytes(data);
+                HttpEntity entity = new ByteArrayEntity(dataAsByteArray, ContentType.APPLICATION_JSON);
+                httpPatch.setEntity(entity);
+                logger.info("Making %s Method to the url %s".formatted(httpPatch.getClass().getName(),url));
+                return  _httpClient.execute(httpPatch ,response -> {
+                    var result=  EntityUtils.toByteArray(response.getEntity());
+                    logger.info("Successfull Response %s Method to the url %s".formatted(httpPatch.getClass().getName(),url));
+                    return (T) _mapper.readValue(result,data.getClass());
+                });
+
+            } catch (Exception e) {
+                logger.debug(e.getMessage(),e);
+                throw  new RuntimeException(e.getMessage());
+            }
+        });
+    }
 
 
+    public <T> CompletableFuture<T> PutAsync(String url, T data) {
+        return CompletableFuture.supplyAsync(()->{
+            HttpPut httpPut= new HttpPut(url);
+            try {
+                var dataAsByteArray = _mapper.writeValueAsBytes(data);
+                HttpEntity entity = new ByteArrayEntity(dataAsByteArray, ContentType.APPLICATION_JSON);
+                httpPut.setEntity(entity);
+                logger.info("Making %s Method to the url %s".formatted(httpPut.getClass().getName(),url));
+                return  _httpClient.execute(httpPut ,response -> {
+                    var result=  EntityUtils.toByteArray(response.getEntity());
+                    logger.info("Successfull Response %s Method to the url %s".formatted(httpPut.getClass().getName(),url));
+                    return (T) _mapper.readValue(result,data.getClass());
+                });
 
+            } catch (Exception e) {
+                logger.debug(e.getMessage(),e);
+                throw  new RuntimeException(e.getMessage());
+            }
         });
     }
 
